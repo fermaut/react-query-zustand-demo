@@ -1,54 +1,32 @@
-import * as zustand from 'zustand';
 import { act } from '@testing-library/react';
+import * as zustand from 'zustand';
 
-const { create: actualCreate, createStore: actualCreateStore } =
-  jest.requireActual<typeof zustand>('zustand');
+const storeResetFns = new Set<() => void>();
 
-// Conjunto para mantener las funciones de reset de todos los stores
-export const storeResetFns = new Set<() => void>();
+const createImpl = jest.requireActual<typeof zustand>('zustand').create;
 
-// Función auxiliar para crear stores no currificados
-const createUncurried = <T>(stateCreator: zustand.StateCreator<T>) => {
-  const store = actualCreate(stateCreator);
-  const initialState = store.getState();
-  // Agregar función de reset al conjunto
-  storeResetFns.add(() => {
-    store.setState(initialState, true);
-  });
-  return store;
-};
+export const create = (<T>(createState: zustand.StateCreator<T>) => {
+  // Si se llama como una función currificada, devolver la implementación
+  if (typeof createState === 'function') {
+    const store = createImpl(createState);
+    const initialState = store.getState();
 
-// Mock de create que soporta tanto la versión currificada como la no currificada
-export const create = (<T>(stateCreator: zustand.StateCreator<T>) => {
-  console.log('zustand create mock');
+    const resetFn = () => {
+      act(() => {
+        store.setState(initialState, true);
+      });
+    };
 
-  return typeof stateCreator === 'function'
-    ? createUncurried(stateCreator)
-    : createUncurried;
+    storeResetFns.add(resetFn);
+    return store;
+  }
+
+  // Si se llama como una función normal, devolver la función currificada
+  return create;
 }) as typeof zustand.create;
 
-// Función auxiliar para crear stores no currificados (createStore)
-const createStoreUncurried = <T>(stateCreator: zustand.StateCreator<T>) => {
-  const store = actualCreateStore(stateCreator);
-  const initialState = store.getState();
-  // Agregar función de reset al conjunto
-  storeResetFns.add(() => {
-    store.setState(initialState, true);
-  });
-  return store;
-};
-
-// Mock de createStore que soporta tanto la versión currificada como la no currificada
-export const createStore = (<T>(stateCreator: zustand.StateCreator<T>) => {
-  console.log('zustand createStore mock');
-
-  return typeof stateCreator === 'function'
-    ? createStoreUncurried(stateCreator)
-    : createStoreUncurried;
-}) as typeof zustand.createStore;
-
-// Resetear todos los stores después de cada test
-afterEach(() => {
+// Resetear todos los stores antes de cada test
+beforeEach(() => {
   act(() => {
     storeResetFns.forEach((resetFn) => {
       resetFn();

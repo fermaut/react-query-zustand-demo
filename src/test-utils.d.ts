@@ -6,7 +6,6 @@ declare global {
       toBeInTheDocument(): R;
       toBeDisabled(): R;
       toHaveValue(value: string | number | string[]): R;
-      // Aquí puedes agregar más matchers si los necesitas
     }
   }
 } 

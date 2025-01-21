@@ -1,8 +1,9 @@
+import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { ChakraProvider } from '@chakra-ui/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Wizard } from '../Wizard';
-import { useWizardStore } from '../../../hooks/useWizardStore';
+import { useStore } from '../../../store';
 import { createItem } from '../../../utils/api';
 
 // Mock the API
@@ -18,74 +19,62 @@ const queryClient = new QueryClient({
   },
 });
 
-const renderWithProviders = (component: React.ReactNode) => {
-  return render(
-    <QueryClientProvider client={queryClient}>
-      <ChakraProvider>{component}</ChakraProvider>
-    </QueryClientProvider>
-  );
-};
+const Wrapper = ({ children }: { children: React.ReactNode }) => (
+  <QueryClientProvider client={queryClient}>
+    <ChakraProvider>{children}</ChakraProvider>
+  </QueryClientProvider>
+);
 
-describe('Wizard Component', () => {
+describe('Wizard', () => {
   beforeEach(() => {
-    // Reset mocks
-    (createItem as jest.Mock).mockReset();
-    // Reset store to initial state
-    const resetStore = useWizardStore.getState().resetForm;
-    resetStore();
+    // Resetear el estado del store antes de cada test
+    const resetForm = useStore.getState().resetForm;
+    const closeWizard = useStore.getState().closeWizard;
+    resetForm();
+    closeWizard();
   });
 
-  it('should show the create button and open modal when clicked', () => {
-    renderWithProviders(<Wizard />);
+  it('debería mostrar el primer paso al abrir el wizard', () => {
+    render(<Wizard />, { wrapper: Wrapper });
     
-    // Verificar que el botón existe
-    const createButton = screen.getByText('Crear Nuevo');
-    expect(createButton).toBeInTheDocument();
-    
-    // Click en el botón y verificar que se abre el modal
-    fireEvent.click(createButton);
+    // Abrir el wizard
+    const openButton = screen.getByText('Crear Nuevo');
+    fireEvent.click(openButton);
+
+    // Verificar que se muestra el primer paso
     expect(screen.getByText('Crear Nuevo - Nombre')).toBeInTheDocument();
+    expect(screen.getByLabelText('Nombre del elemento')).toBeInTheDocument();
   });
 
-  it('should disable next button when name is empty', () => {
-    renderWithProviders(<Wizard />);
+  it('debería navegar al segundo paso cuando se ingresa un nombre', () => {
+    render(<Wizard />, { wrapper: Wrapper });
     
-    // Abrir el modal
-    fireEvent.click(screen.getByText('Crear Nuevo'));
+    // Abrir el wizard
+    const openButton = screen.getByText('Crear Nuevo');
+    fireEvent.click(openButton);
+
+    // Ingresar un nombre y avanzar
+    const nameInput = screen.getByLabelText('Nombre del elemento');
+    fireEvent.change(nameInput, { target: { value: 'Test Item' } });
     
-    // Verificar que el botón siguiente está deshabilitado
+    const nextButton = screen.getByText('Siguiente');
+    fireEvent.click(nextButton);
+
+    // Verificar que se muestra el segundo paso
+    expect(screen.getByText('Crear Nuevo - Descripción')).toBeInTheDocument();
+    expect(screen.getByLabelText('Descripción del elemento')).toBeInTheDocument();
+  });
+
+  it('no debería permitir avanzar si el nombre está vacío', () => {
+    render(<Wizard />, { wrapper: Wrapper });
+    
+    // Abrir el wizard
+    const openButton = screen.getByText('Crear Nuevo');
+    fireEvent.click(openButton);
+
+    // Verificar que el botón está deshabilitado
     const nextButton = screen.getByText('Siguiente');
     expect(nextButton).toBeDisabled();
-  });
-
-  it('should enable next button when name is filled', () => {
-    renderWithProviders(<Wizard />);
-    
-    // Abrir el modal
-    fireEvent.click(screen.getByText('Crear Nuevo'));
-    
-    // Llenar el campo nombre
-    const nameInput = screen.getByPlaceholderText('Ingrese el nombre...');
-    fireEvent.change(nameInput, { target: { value: 'Test Item' } });
-    
-    // Verificar que el botón siguiente está habilitado
-    const nextButton = screen.getByText('Siguiente');
-    expect(nextButton).not.toBeDisabled();
-  });
-
-  it('should navigate to step 2 when clicking next', () => {
-    renderWithProviders(<Wizard />);
-    
-    // Abrir el modal y llenar el nombre
-    fireEvent.click(screen.getByText('Crear Nuevo'));
-    const nameInput = screen.getByPlaceholderText('Ingrese el nombre...');
-    fireEvent.change(nameInput, { target: { value: 'Test Item' } });
-    
-    // Ir al siguiente paso
-    fireEvent.click(screen.getByText('Siguiente'));
-    
-    // Verificar que estamos en el paso 2
-    expect(screen.getByText('Crear Nuevo - Descripción')).toBeInTheDocument();
   });
 
   it('should create item when form is complete', async () => {
@@ -96,21 +85,20 @@ describe('Wizard Component', () => {
       description: 'Test Description',
     });
 
-    renderWithProviders(<Wizard />);
+    render(<Wizard />, { wrapper: Wrapper });
     
-    // Abrir el modal y completar el formulario
-    fireEvent.click(screen.getByText('Crear Nuevo'));
+    // Abrir el wizard y completar el formulario
+    const openButton = screen.getByText('Crear Nuevo');
+    fireEvent.click(openButton);
     
     // Paso 1: Nombre
-    fireEvent.change(screen.getByPlaceholderText('Ingrese el nombre...'), {
-      target: { value: 'Test Item' },
-    });
+    const nameInput = screen.getByLabelText('Nombre del elemento');
+    fireEvent.change(nameInput, { target: { value: 'Test Item' } });
     fireEvent.click(screen.getByText('Siguiente'));
     
     // Paso 2: Descripción
-    fireEvent.change(screen.getByPlaceholderText('Ingrese la descripción...'), {
-      target: { value: 'Test Description' },
-    });
+    const descriptionInput = screen.getByLabelText('Descripción del elemento');
+    fireEvent.change(descriptionInput, { target: { value: 'Test Description' } });
     
     // Crear el item
     fireEvent.click(screen.getByText('Crear'));
@@ -130,17 +118,16 @@ describe('Wizard Component', () => {
       () => new Promise((resolve) => setTimeout(resolve, 100))
     );
 
-    renderWithProviders(<Wizard />);
+    render(<Wizard />, { wrapper: Wrapper });
     
     // Completar y enviar el formulario
-    fireEvent.click(screen.getByText('Crear Nuevo'));
-    fireEvent.change(screen.getByPlaceholderText('Ingrese el nombre...'), {
-      target: { value: 'Test Item' },
-    });
+    const openButton = screen.getByText('Crear Nuevo');
+    fireEvent.click(openButton);
+    const nameInput = screen.getByLabelText('Nombre del elemento');
+    fireEvent.change(nameInput, { target: { value: 'Test Item' } });
     fireEvent.click(screen.getByText('Siguiente'));
-    fireEvent.change(screen.getByPlaceholderText('Ingrese la descripción...'), {
-      target: { value: 'Test Description' },
-    });
+    const descriptionInput = screen.getByLabelText('Descripción del elemento');
+    fireEvent.change(descriptionInput, { target: { value: 'Test Description' } });
     fireEvent.click(screen.getByText('Crear'));
     
     // Verificar estado de carga
@@ -152,13 +139,13 @@ describe('Wizard Component', () => {
   });
 
   it('should allow navigation back to step 1', () => {
-    renderWithProviders(<Wizard />);
+    render(<Wizard />, { wrapper: Wrapper });
     
     // Ir al paso 2
-    fireEvent.click(screen.getByText('Crear Nuevo'));
-    fireEvent.change(screen.getByPlaceholderText('Ingrese el nombre...'), {
-      target: { value: 'Test Item' },
-    });
+    const openButton = screen.getByText('Crear Nuevo');
+    fireEvent.click(openButton);
+    const nameInput = screen.getByLabelText('Nombre del elemento');
+    fireEvent.change(nameInput, { target: { value: 'Test Item' } });
     fireEvent.click(screen.getByText('Siguiente'));
     
     // Volver al paso 1
@@ -167,6 +154,6 @@ describe('Wizard Component', () => {
     // Verificar que estamos en el paso 1
     expect(screen.getByText('Crear Nuevo - Nombre')).toBeInTheDocument();
     // Verificar que el nombre se mantiene
-    expect(screen.getByPlaceholderText('Ingrese el nombre...')).toHaveValue('Test Item');
+    expect(nameInput).toHaveValue('Test Item');
   });
 }); 

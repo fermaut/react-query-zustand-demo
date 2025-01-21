@@ -1,8 +1,8 @@
 import { Input, VStack } from '@chakra-ui/react';
-import { useItemsStore } from '../hooks/useItemsStore';
+import { useItemsSlice } from '../store';
 
 export const Filters = () => {
-  const { search, setSearch } = useItemsStore();
+  const { search, setSearch } = useItemsSlice();
 
   return (
     <VStack gap={4} alignItems="stretch" marginBottom={4}>

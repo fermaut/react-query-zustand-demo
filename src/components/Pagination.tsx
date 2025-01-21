@@ -1,11 +1,11 @@
 import { Button, HStack, Text } from '@chakra-ui/react';
-import { useItemsStore } from '../hooks/useItemsStore';
+import { useItemsSlice } from '../store';
 import { useItemsQuery } from '../hooks/useItemsQuery';
 
 export const Pagination = () => {
-  const { page, pageSize, search } = useItemsStore();
+  const { page, pageSize, search } = useItemsSlice();
   const { data } = useItemsQuery({ page, pageSize, search });
-  const { setPage } = useItemsStore();
+  const { setPage } = useItemsSlice();
 
   if (!data) return null;
 

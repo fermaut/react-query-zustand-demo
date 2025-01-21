@@ -9,11 +9,11 @@ import {
   TableContainer,
 } from '@chakra-ui/table';
 import { useItemsQuery } from '../hooks/useItemsQuery';
-import { useItemsStore } from '../hooks/useItemsStore';
+import { useItemsSlice } from '../store';
 import type { Item } from '../utils/api';
 
 export const Table = () => {
-  const { page, pageSize, search } = useItemsStore();
+  const { page, pageSize, search } = useItemsSlice();
   const { data, isLoading, isError } = useItemsQuery({ page, pageSize, search });
 
   if (isLoading) {

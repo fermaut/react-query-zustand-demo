@@ -1,9 +1,9 @@
 import { Input } from '@chakra-ui/react';
 import { FormControl, FormLabel } from '@chakra-ui/form-control';
-import { useWizardStore } from '../../hooks/useWizardStore';
+import { useWizardSlice } from '../../store';
 
 export const Step1 = () => {
-  const { formData, setName } = useWizardStore();
+  const { formData, setName } = useWizardSlice();
 
   return (
     <FormControl>

@@ -10,7 +10,7 @@ import {
 import { Step1 } from './Step1';
 import { Step2 } from './Step2';
 import { useCreateItemMutation } from '../../hooks/useItemsQuery';
-import { useWizardStore } from '../../hooks/useWizardStore';
+import { useWizardSlice } from '../../store';
 
 export const Wizard = () => {
   const {
@@ -22,7 +22,7 @@ export const Wizard = () => {
     nextStep,
     previousStep,
     resetForm,
-  } = useWizardStore();
+  } = useWizardSlice();
 
   const createMutation = useCreateItemMutation();
 
