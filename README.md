@@ -1,50 +1,106 @@
-# React + TypeScript + Vite
+# Demostración de Zustand + React Query
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+## 🎯 Descripción General
 
-Currently, two official plugins are available:
+Esta aplicación es una demostración práctica que muestra la integración de Zustand para gestión de estado y React Query para manejo de datos del servidor, implementando un CRUD básico con una interfaz de usuario moderna usando Chakra UI.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## 💾 Gestión de Estado con Zustand
 
-## Expanding the ESLint configuration
+### Arquitectura del Store
 
-If you are developing a production application, we recommend updating the configuration to enable type aware lint rules:
+El store está organizado en slices para mejor mantenibilidad y separación de responsabilidades:
 
-- Configure the top-level `parserOptions` property like this:
+1. **items.ts**: Gestión de la tabla y filtros
 
-```js
-export default tseslint.config({
-  languageOptions: {
-    // other options...
-    parserOptions: {
-      project: ['./tsconfig.node.json', './tsconfig.app.json'],
-      tsconfigRootDir: import.meta.dirname,
-    },
-  },
-})
-```
+   - Paginación y tamaño de página
+   - Filtros de búsqueda
+   - Estado persistente entre componentes
+   - Acciones relacionadas con items
 
-- Replace `tseslint.configs.recommended` to `tseslint.configs.recommendedTypeChecked` or `tseslint.configs.strictTypeChecked`
-- Optionally add `...tseslint.configs.stylisticTypeChecked`
-- Install [eslint-plugin-react](https://github.com/jsx-eslint/eslint-plugin-react) and update the config:
+2. **wizard.ts**: Gestión del formulario multi-paso
+   - Estado del modal (abierto/cerrado)
+   - Navegación entre pasos
+   - Validación y persistencia de datos del formulario
+   - Acciones de reset y actualización
 
-```js
-// eslint.config.js
-import react from 'eslint-plugin-react'
+### Ventajas de Zustand
 
-export default tseslint.config({
-  // Set the react version
-  settings: { react: { version: '18.3' } },
-  plugins: {
-    // Add the react plugin
-    react,
-  },
-  rules: {
-    // other rules...
-    // Enable its recommended rules
-    ...react.configs.recommended.rules,
-    ...react.configs['jsx-runtime'].rules,
-  },
-})
-```
+- **Simplicidad**: API minimalista y fácil de entender
+- **Performance**: Actualizaciones selectivas, solo re-renderiza lo necesario
+- **TypeScript**: Soporte nativo para tipos
+- **DevTools**: Integración con Redux DevTools para debugging
+- **Middleware**: Fácil de extender con middleware como `devtools`
+
+## 🔄 Gestión de Datos con React Query
+
+### Características
+
+1. **Queries**:
+
+   - Obtención de datos paginados
+   - Caché automática
+   - Revalidación inteligente
+   - Estado de carga y error
+
+2. **Mutations**:
+   - Creación de nuevos elementos
+   - Invalidación automática de caché
+   - Manejo de estado de la mutación
+
+### Beneficios de React Query
+
+- **Caché Inteligente**: Reduce llamadas al servidor
+- **Stale-While-Revalidate**: Muestra datos mientras actualiza en background
+- **Optimistic Updates**: Mejor experiencia de usuario
+- **DevTools**: Panel de desarrollo integrado
+
+## 🧪 Testing
+
+### Mock de Zustand
+
+Se implementa un mock personalizado de Zustand (`src/__mocks__/zustand.ts`) que:
+
+- Permite crear stores de prueba con estado inicial
+- Proporciona funciones de reset automático entre tests
+- Integra con `act` de React Testing Library
+- Mantiene el estado consistente durante los tests
+
+### Tests de React Query
+
+Los tests de React Query (`src/hooks/__tests__`) demuestran:
+
+- Configuración del QueryClient para testing
+- Mock de llamadas a API
+- Verificación de estados de carga y éxito
+- Pruebas de mutaciones y queries
+- Manejo de caché y revalidación
+
+### Tests de Componentes
+
+Se implementan tests para:
+
+- Formulario wizard multi-paso
+- Componentes de tabla y filtros
+- Integración de stores y queries
+- Comportamiento de UI y estados
+
+## 🛠 Herramientas de Desarrollo
+
+### React Query DevTools
+
+- **Panel de Queries**: Muestra todas las queries activas
+- **Estado de Caché**: Visualiza el estado de la caché
+- **Debugging**: Herramientas para depurar queries y mutations
+- **Tiempo Real**: Actualización en vivo de estados y datos
+
+### Redux DevTools
+
+- **Time-Travel Debugging**: Navega por el historial de cambios
+- **Action Log**: Registro de todas las acciones
+- **State Diff**: Visualiza diferencias entre estados
+- **Export/Import**: Guarda y carga estados para debugging
+
+## 📚 Recursos Adicionales
+
+- [Documentación de Zustand](https://github.com/pmndrs/zustand)
+- [Documentación de React Query](https://tanstack.com/query/latest)
