@@ -10,9 +10,19 @@ import { DevTools } from './components/development/DevTools';
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      refetchOnWindowFocus: false,
-      retry: false,
+      retry: 1, // Número de reintentos si la request falla
+      staleTime: 1000 * 60 * 5, // Tiempo que los datos se consideran válidos antes de recargar (5 min)
+      gcTime: 1000 * 60 * 10, // Tiempo que los datos inactivos permanecen en caché antes de ser eliminados (10 min)
+      refetchOnMount: true, // Recarga los datos cuando el componente se monta
+      refetchOnReconnect: true, // Recarga los datos cuando se recupera la conexión a internet
     },
+    mutations: {
+      retry: 2, // Número de reintentos para operaciones de escritura (crear/actualizar/eliminar)
+      onError: (error) => {
+        // Manejador global de errores para todas las mutaciones
+        console.error('Mutation error:', error);
+      }
+    }
   },
 });
 
